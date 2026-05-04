@@ -1,6 +1,6 @@
 {
   "name": "@sha3/harness",
-  "version": "0.0.4",
+  "version": "0.0.7",
   "type": "module",
   "publishConfig": {
     "access": "public"

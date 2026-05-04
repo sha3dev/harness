@@ -16,117 +16,94 @@ Use this skill when writing or reviewing TypeScript source and tests.
 - Use type-only imports when possible.
 - Always use braces in control flow.
 - Throw plain `Error` by default; add custom error classes only when control flow depends on the error type.
-- Add wrappers, interfaces, factories, helpers, and option objects only for a current need.
-- Keep implementations direct until duplication or ownership pressure makes extraction useful.
-- Prefer compact statements: move complex subexpressions into clearly named intermediate values so the main operation stays easy to scan.
-- If a function needs many inputs, define a named `<FunctionName>Options` type and pass a single `options` parameter.
+- Add abstractions (wrappers, interfaces, factories, helpers, option objects) only for a current need, never speculatively.
+- Write the shortest clear implementation. Avoid verbose patterns, unnecessary temporaries, and boilerplate that adds length but not clarity.
+- Prefer single-return functions. Use early returns only for guard clauses at the top.
+- If a function needs many inputs, define a `<FunctionName>Options` type and pass a single `options` parameter.
+
+### Visual Rhythm
+
+- **No blank lines inside function bodies** unless separating two distinct logical blocks. One blank line maximum, never two.
+- **No blank lines after opening braces or before closing braces.**
+- **Keep lines short.** Target 80 characters. Never break an expression across lines — if it doesn't fit, decompose it into smaller named values or separate operations.
+- **Prefer dense expressions.** Use ternaries, short-circuits, nullish coalescing, and chained calls when they read naturally.
+- **Group related statements tightly.** Unrelated logic belongs in a different method, not after a blank line.
+- **One blank line between methods.** No more, no less.
 
 ### Rule Strength
 
-- Treat these rules as requirements for new or edited TypeScript unless they conflict with an external contract or with a stronger project skill.
-- External contracts include database column names, third-party payloads, public API shapes, and generated types.
-- Keep external contract shapes at the boundary. Map them into idiomatic TypeScript names before they enter application logic.
-- If a rule is intentionally skipped, mention the reason in the final response.
+- These rules are requirements unless they conflict with an external contract (database columns, third-party payloads, public API shapes, generated types) or a stronger project skill.
+- Keep external contract shapes at the boundary. Map them to idiomatic TypeScript before they enter application logic.
+- If a rule is intentionally skipped, state the reason in the final response.
 
 ## Class-First Source Modules
 
-All `src/**/*.ts` implementation files must expose behavior through a public class named after the file responsibility. One public class per file.
+One public class per `src/**/*.ts` implementation file, named after the file responsibility.
 
-- Prefer instance methods by default. Use static methods only for stateless pure operations where constructing the class would add no value.
-- Never place standalone functions in a file that already contains a class. All logic belongs to the class as private, protected, or public methods.
-- Barrel or composition files (`index.ts`) may export small functions only to wire classes together. They must not contain implementation logic.
+- Prefer instance methods. Use static only for stateless pure operations where constructing the class adds no value.
+- Never place standalone functions in a file that has a class. All logic belongs to the class as methods.
+- Barrel files (`index.ts`) may export small wiring functions. They must not contain implementation logic.
 
 ### Auxiliary Resource Files
 
-When a class needs non-TypeScript content (SQL queries, templates, schemas), place it in a companion directory named after the source file. The directory sits next to the source file and contains one file per resource.
+Non-TypeScript content (SQL, templates, schemas) goes in a companion directory named after the source file:
 
 ```text
-src/packages/user/
-  user.repository.ts
-  user.repository/
-    find-by-id.sql
-    find-active.sql
+user.repository.ts
+user.repository/
+  find-by-id.sql
+  find-active.sql
 ```
 
-Import or read these files from the class; never inline large non-TS blocks as template literals.
+Import these from the class; never inline large non-TS blocks as template literals.
 
 ### Allowed Exceptions
 
-These file types do not require a class: type-only files (`*.types.ts`), barrel files (`index.ts`), CLI scripts under `scripts/`, tests, and tiny config modules whose only job is reading environment values.
+Files that do not require a class: `*.types.ts`, `index.ts` barrels, `scripts/`, tests, and tiny config modules that only read environment values.
 
 ### File Cohesion
 
-Split files when they mix responsibilities, hide important behavior, or make the public class difficult to review. Extract by stable responsibility (parsing, mapping, persistence, orchestration, external integration). Avoid splitting merely to satisfy a size target.
+Split when a file mixes responsibilities or hides important behavior. Extract by stable responsibility (parsing, mapping, persistence, orchestration). Do not split merely to satisfy a size target.
 
 ## Section Markers
 
-Every `src/**/*.ts` implementation file must be organized with JSDoc `@section` markers. Add a marker only for sections that have content; do not add empty sections.
-
-Format:
+Organize every `src/**/*.ts` implementation file with `@section` markers. Only add sections that have content. Sections must appear in this order — never reorder:
 
 ```ts
-/**
- * @section <name>
- */
+/** @section <name> */
 ```
 
-Sections in order:
+1. `imports:externals` 2. `imports:internals` 3. `consts` 4. `types` 5. `class` 6. `private:attributes` 7. `protected:attributes` 8. `public:properties` 9. `constructor` 10. `static:properties` 11. `factory` 12. `private:methods` 13. `protected:methods` 14. `public:methods` 15. `static:methods`
 
-1. `imports:externals`
-2. `imports:internals`
-3. `consts`
-4. `types`
-5. `class` — immediately before the exported class declaration
-6. `private:attributes`
-7. `protected:attributes`
-8. `public:properties`
-9. `constructor`
-10. `static:properties`
-11. `factory`
-12. `private:methods`
-13. `protected:methods`
-14. `public:methods`
-15. `static:methods`
-
-Files without a class (allowed exceptions) still use applicable markers such as `imports:*`, `types`, `consts`, and `public:methods`.
+Files without a class still use applicable markers (`imports:*`, `types`, `consts`, `public:methods`).
 
 ### Example
 
 ```ts
-/**
- * @section imports:externals
- */
+/** @section imports:externals */
 
 import type { Client } from "some-client";
 
-/**
- * @section imports:internals
- */
+/** @section imports:internals */
 
 import type { Item } from "./item.types.js";
 
-/**
- * @section class
- */
+/** @section class */
 
+/** Persists and retrieves items. */
 export class ItemRepository {
-  /**
-   * @section constructor
-   */
+  /** @section constructor */
 
   public constructor(private readonly client: Client) {}
 
-  /**
-   * @section public:methods
-   */
+  /** @section public:methods */
 
+  /** Finds an item by its unique identifier. */
   public async findById(id: string): Promise<Item | null> {
     return null;
   }
 
-  /**
-   * @section private:methods
-   */
+  /** @section private:methods */
 
   private mapRow(row: ItemRow): Item {
     return row;
@@ -134,32 +111,34 @@ export class ItemRepository {
 }
 ```
 
+## JSDoc
+
+- Every exported class and every public/protected method must have a single-line JSDoc describing its purpose.
+- Private methods, constructors, and self-explanatory one-liners do not need JSDoc.
+- Use multi-line JSDoc only when parameters or return values need clarification.
+
 ## Boundary Naming
 
-- Use camelCase for all TypeScript identifiers (properties, variables, methods).
-- Never define application types with raw external names (e.g., `USR_id`). Alias external names to camelCase at the boundary (SQL aliases, mapper functions).
-- If a boundary-only type must mirror an external shape, suffix it with `Raw`, `Payload`, or `External`.
+- camelCase for all TypeScript identifiers.
+- Never use raw external names (e.g., `USR_id`) in application types. Alias at the boundary.
+- Boundary-only types that mirror an external shape: suffix with `Raw`, `Payload`, or `External`.
 
 See `db-naming` skill for SQL-side conventions.
 
 ## Logging
 
 - CLI entrypoints may use `console.error` for progress and fatal errors.
-- Application code should prefer a small local logger or injected logging function.
-- Do not add a logging abstraction only for one or two messages; add it when multiple files need consistent output.
+- Application code: prefer a small local logger or injected logging function. Add a logging abstraction only when multiple files need consistent output.
 
 ## Tests
 
-- Add focused tests for behavior, boundaries, and regressions.
-- Do not add large test suites that only restate implementation details.
-- Tests may use `node:test` functions directly; they do not need wrapper classes.
+- Focused tests for behavior, boundaries, and regressions. No large suites that restate implementation details.
+- Tests may use `node:test` directly; no wrapper classes needed.
 
 ## Pre-Completion Checklist
 
-Before finishing TypeScript work:
-
-1. Review every touched source file for class-first and section-marker compliance. Any file without a public class must be an allowed exception — call it out in the final response.
+1. Review touched files for class-first and section-marker compliance. Call out any exceptions.
 2. Run `npm run typecheck` when available.
-3. Run focused tests for changed behavior when available.
-4. Run the project formatter/linter command when available.
-5. If any check cannot run, say why in the final response.
+3. Run focused tests for changed behavior.
+4. Run the project formatter/linter.
+5. If any check cannot run, say why.

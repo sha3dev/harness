@@ -10,38 +10,31 @@ Use this skill when designing tables, writing migrations, or reviewing SQL schem
 
 ## Core Rules
 
-- **snake_case everywhere**: tables, columns, constraints, and indexes.
+- **snake_case** for all identifiers: tables, columns, constraints, indexes.
 - **Singular table names**: `agent`, not `agents`.
-- **3-letter uppercase column prefixes**: every column begins with a prefix derived from its table name (e.g., `agent` -> `AGN`).
-- **Foreign keys use the referenced table's prefix**, not the current table's. A reference to `agent` in `task` uses `AGN_id`, not `TSK_agent_id`.
-- **No mixed casing**: never combine `camelCase`, `PascalCase`, and `snake_case` in the same schema.
+- **3-letter uppercase column prefixes** derived from the table name (e.g., `agent` -> `AGN`).
+- **Foreign keys use the referenced table's prefix**: `AGN_id` in `task`, not `TSK_agent_id`.
 
 ## Column Naming
 
 Format: `<PREFIX>_<column_name>`
 
-Common patterns:
-
 | Pattern | Example |
 | :------ | :------ |
 | Primary key | `TSK_id` |
-| Created timestamp | `TSK_created_at` |
-| Updated timestamp | `TSK_updated_at` |
-| Soft delete | `TSK_deleted_at` |
+| Timestamps | `TSK_created_at`, `TSK_updated_at`, `TSK_deleted_at` |
 | Simple FK | `PRJ_id` (references `project`) |
 | Descriptive FK | `depends_on_TSK_id` (self-reference) |
 
-## Constraint and Index Names
+## Constraints and Indexes
 
 - Index: `idx_<table>_<column>`
-- Unique constraint: `uq_<table>_<column>`
-- Foreign key constraint: `fk_<table>_<column>`
+- Unique: `uq_<table>_<column>`
+- Foreign key: `fk_<table>_<column>`
 
 ## Prefix Registry
 
-Track all prefixes in a project-level registry to prevent collisions. Choose the first 3 meaningful letters of the table name. If that creates a collision, pick a distinct variation and record it.
-
-Example registry:
+Track prefixes in a project-level registry. Use the first 3 meaningful letters; on collision, pick a distinct variation and record it.
 
 | Table | Prefix | Table | Prefix |
 | :---- | :----- | :---- | :----- |
@@ -92,6 +85,6 @@ CREATE TABLE task_dependency (
 
 ## Migration Practices
 
-- Wrap migrations in transaction blocks (`BEGIN` / `COMMIT`).
-- Add `COMMENT ON TABLE` and `COMMENT ON COLUMN` where useful.
-- Test migrations against realistic data before rollout.
+- Wrap in transaction blocks (`BEGIN` / `COMMIT`).
+- Add `COMMENT ON TABLE` / `COMMENT ON COLUMN` where useful.
+- Test against realistic data before rollout.

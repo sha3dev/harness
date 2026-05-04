@@ -6,17 +6,17 @@ origin: harness
 
 # Playwright Local Canary
 
-Use this skill when a task requires Playwright browser automation and the agent should reuse the local Chrome Canary session.
+Use this skill when Playwright browser automation should reuse the local Chrome Canary session.
 
 ## Workflow
 
-1. Launch Chrome Canary with remote debugging enabled:
+1. Launch Chrome Canary with remote debugging:
 
    ```sh
    npm run harness:open-chrome-canary
    ```
 
-2. The Playwright MCP server is already configured in `.claude/config.json`:
+2. The Playwright MCP server is configured in `.claude/config.json`:
 
    ```json
    {
@@ -29,11 +29,11 @@ Use this skill when a task requires Playwright browser automation and the agent 
    }
    ```
 
-3. Use Playwright MCP tools once the browser is reachable at `http://127.0.0.1:9222/json/version`.
+3. Use Playwright MCP tools once `http://127.0.0.1:9222/json/version` is reachable.
 
 ## Notes
 
-- The launcher uses the real Chrome Canary user data directory on macOS: `~/Library/Application Support/Google/Chrome Canary`.
+- Uses the real Chrome Canary user data directory on macOS: `~/Library/Application Support/Google/Chrome Canary`.
 - If Chrome Canary is already open without remote debugging, close it and relaunch with the script.
 - Environment overrides: `CHROME_CANARY_USER_DATA_DIR`, `CHROME_CANARY_PROFILE_DIRECTORY`, `CHROME_CANARY_EXECUTABLE_PATH`, `CHROME_CANARY_REMOTE_DEBUGGING_PORT`.
-- Keep the MCP bound to `127.0.0.1` — the debugging endpoint exposes the full browser session.
+- Keep MCP bound to `127.0.0.1` — the debugging endpoint exposes the full browser session.
