@@ -1,78 +1,37 @@
 ---
 name: db-naming
-description: Define consistent database naming conventions for SQL schemas,
-  migrations, constraints, indexes, and foreign keys using snake_case, singular
-  table names, and 3-letter uppercase column prefixes.
+description: Consistent database naming conventions for SQL schemas, migrations, constraints, indexes, and foreign keys.
 origin: harness
 ---
 
 # Database Naming Conventions
 
-This skill defines a consistent naming system for relational database schemas,
-migrations, and DDL. It standardizes table names, column names, prefixes,
-foreign keys, and constraints so schema changes remain predictable and easy to
-review.
-
-## When to Use
-
-- Designing new SQL tables, columns, indexes, or constraints.
-- Writing or reviewing database migrations.
-- Refactoring an existing schema toward a consistent naming convention.
-- Validating foreign key and join table naming before implementation.
+Use this skill when designing tables, writing migrations, or reviewing SQL schemas.
 
 ## Core Rules
 
-- **snake_case Everywhere**: Use `snake_case` for tables, columns, constraints, and indexes.
-- **Singular Table Names**: Use `agent`, not `agents`.
-- **3-Letter Column Prefixes**: Every column begins with an uppercase 3-letter prefix derived from its table.
-- **Referenced Prefix for FKs**: Foreign keys use the referenced table prefix, not the current table prefix.
-- **Predictable Constraint Names**: Indexes, unique constraints, and FKs follow fixed patterns.
+- **snake_case everywhere**: tables, columns, constraints, and indexes.
+- **Singular table names**: `agent`, not `agents`.
+- **3-letter uppercase column prefixes**: every column begins with a prefix derived from its table name (e.g., `agent` -> `AGN`).
+- **Foreign keys use the referenced table's prefix**, not the current table's. A reference to `agent` in `task` uses `AGN_id`, not `TSK_agent_id`.
+- **No mixed casing**: never combine `camelCase`, `PascalCase`, and `snake_case` in the same schema.
 
-## Naming Format
+## Column Naming
 
-Use singular, descriptive table names in `snake_case`.
+Format: `<PREFIX>_<column_name>`
 
-- Correct: `agent`, `task_dependency`, `project`
-- Incorrect: `agents`, `TaskDependency`, `projectItems`
+Common patterns:
 
-Columns use this format:
+| Pattern | Example |
+| :------ | :------ |
+| Primary key | `TSK_id` |
+| Created timestamp | `TSK_created_at` |
+| Updated timestamp | `TSK_updated_at` |
+| Soft delete | `TSK_deleted_at` |
+| Simple FK | `PRJ_id` (references `project`) |
+| Descriptive FK | `depends_on_TSK_id` (self-reference) |
 
-```text
-<PREFIX>_<column_name>
-```
-
-Prefixes are 3-letter uppercase identifiers derived from the table name.
-
-- `agent` -> `AGN`
-- `project` -> `PRJ`
-- `task` -> `TSK`
-
-If a collision occurs, choose a distinct variation and document it in the
-registry.
-
-Common column patterns:
-
-- Primary key: `<PREFIX>_id`
-- Created timestamp: `<PREFIX>_created_at`
-- Updated timestamp: `<PREFIX>_updated_at`
-- Soft delete timestamp: `<PREFIX>_deleted_at`
-
-Foreign key patterns:
-
-Use the prefix of the referenced table, never the current table.
-
-- Simple FK: `<REFERENCED_PREFIX>_id`
-- Descriptive FK: `<descriptive>_<REFERENCED_PREFIX>_id`
-
-Examples:
-
-- `PRJ_id` in `task`
-- `AGN_id` in `task`
-- `depends_on_TSK_id` in `task_dependency`
-
-## Constraint and Index Patterns
-
-Apply these fixed names:
+## Constraint and Index Names
 
 - Index: `idx_<table>_<column>`
 - Unique constraint: `uq_<table>_<column>`
@@ -80,18 +39,15 @@ Apply these fixed names:
 
 ## Prefix Registry
 
+Track all prefixes in a project-level registry to prevent collisions. Choose the first 3 meaningful letters of the table name. If that creates a collision, pick a distinct variation and record it.
+
+Example registry:
+
 | Table | Prefix | Table | Prefix |
 | :---- | :----- | :---- | :----- |
-| agent | AGN | message | MSG |
-| project | PRJ | queue | QUE |
-| task | TSK | member | MBR |
-| soul | SOL | agent_skill | ASK |
-| skill | SKL | task_dependency | TDP |
-| conversation | CNV | notification | NTF |
-| configuration | CFG | credential | CRD |
-
-New prefixes should follow the first 3 meaningful letters where possible. If
-that creates a collision, choose a distinct variation and record it here.
+| agent | AGN | project | PRJ |
+| task | TSK | skill | SKL |
+| conversation | CNV | configuration | CFG |
 
 ## Examples
 
@@ -103,9 +59,7 @@ CREATE TABLE task (
     PRJ_id INTEGER NOT NULL REFERENCES project(PRJ_id),
     AGN_id INTEGER REFERENCES agent(AGN_id),
     TSK_title VARCHAR(500) NOT NULL,
-    TSK_description TEXT,
     TSK_status VARCHAR(50) DEFAULT 'pending',
-    TSK_sort INTEGER DEFAULT 0,
     TSK_created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     TSK_updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -136,15 +90,8 @@ CREATE TABLE task_dependency (
 );
 ```
 
-## Anti-Patterns to Avoid
+## Migration Practices
 
-- Using plural table names such as `agents` or `tasks`.
-- Prefixing foreign keys with the current table prefix instead of the referenced one.
-- Mixing `camelCase`, `PascalCase`, and `snake_case` in the same schema.
-- Creating undocumented custom prefixes when a collision occurs.
-
-## Migration Best Practices
-
-- Use transaction blocks such as `BEGIN` and `COMMIT`.
+- Wrap migrations in transaction blocks (`BEGIN` / `COMMIT`).
 - Add `COMMENT ON TABLE` and `COMMENT ON COLUMN` where useful.
-- Test migrations against realistic production-like data before rollout.
+- Test migrations against realistic data before rollout.
