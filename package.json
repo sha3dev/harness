@@ -1,0 +1,23 @@
+{
+  "name": "@sha3dev/harness",
+  "version": "0.0.0",
+  "type": "module",
+  "bin": {
+    "harness": "./bin/harness.js"
+  },
+  "files": [
+    "bin",
+    "biome",
+    "scripts",
+    "skills"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "init": "node ./bin/harness.js init"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.0.0"
+  }
+}

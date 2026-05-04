@@ -1,0 +1,78 @@
+import { spawn } from "node:child_process";
+import os from "node:os";
+import path from "node:path";
+
+const executablePath =
+  process.env.CHROME_CANARY_EXECUTABLE_PATH ??
+  process.env.CHROME_EXECUTABLE_PATH ??
+  "/Applications/Google Chrome Canary.app/Contents/MacOS/Google Chrome Canary";
+const remoteDebuggingPort =
+  process.env.CHROME_CANARY_REMOTE_DEBUGGING_PORT ?? process.env.CRAWLER_CONNECT_BROWSER_PORT ?? "9222";
+const userDataDir =
+  process.env.CHROME_CANARY_USER_DATA_DIR ??
+  path.join(os.homedir(), "Library", "Application Support", "Google", "Chrome Canary");
+const profileDirectory = process.env.CHROME_CANARY_PROFILE_DIRECTORY ?? "Default";
+const browserUrl = `http://127.0.0.1:${remoteDebuggingPort}`;
+
+async function main() {
+  if (await isEndpointReady(browserUrl)) {
+    logReady("already running");
+    return;
+  }
+
+  const child = spawn(
+    executablePath,
+    [
+      `--user-data-dir=${userDataDir}`,
+      `--profile-directory=${profileDirectory}`,
+      `--remote-debugging-port=${remoteDebuggingPort}`,
+      "--remote-debugging-address=127.0.0.1",
+      "--remote-allow-origins=*",
+    ],
+    {
+      detached: true,
+      stdio: "ignore",
+    },
+  );
+
+  child.unref();
+
+  await waitForEndpoint(browserUrl);
+  logReady("launched");
+}
+
+async function isEndpointReady(url) {
+  try {
+    const response = await fetch(new URL("/json/version", url), {
+      signal: AbortSignal.timeout(1_000),
+    });
+    return response.ok;
+  } catch {
+    return false;
+  }
+}
+
+async function waitForEndpoint(url) {
+  const deadline = Date.now() + 10_000;
+
+  while (Date.now() < deadline) {
+    if (await isEndpointReady(url)) return;
+    await new Promise((resolve) => setTimeout(resolve, 250));
+  }
+
+  throw new Error(
+    `Chrome Canary did not expose DevTools at ${url}. If Canary is already open, close it and run this script before opening it normally.`,
+  );
+}
+
+function logReady(state) {
+  console.error(`[open:chrome-canary] ${state}: ${executablePath}`);
+  console.error(`[open:chrome-canary] user data dir: ${userDataDir}`);
+  console.error(`[open:chrome-canary] profile: ${profileDirectory}`);
+  console.error(`[open:chrome-canary] devtools: ${browserUrl}`);
+}
+
+main().catch((error) => {
+  console.error(`[open:chrome-canary] ${error instanceof Error ? error.message : String(error)}`);
+  process.exit(1);
+});
