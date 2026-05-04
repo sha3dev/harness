@@ -1,13 +1,18 @@
 {
-  "name": "@sha3dev/harness",
-  "version": "0.0.0",
+  "name": "@sha3/harness",
+  "version": "0.0.1",
   "type": "module",
+  "publishConfig": {
+    "access": "public"
+  },
   "bin": {
     "harness": "./bin/harness.js"
   },
   "files": [
+    "AGENTS.md",
     "bin",
     "biome",
+    "mcp",
     "scripts",
     "skills"
   ],
@@ -15,7 +20,8 @@
     "node": ">=20"
   },
   "scripts": {
-    "init": "node ./bin/harness.js init"
+    "init": "node ./bin/harness.js init",
+    "publish:package": "node ./scripts/publish.mjs"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.0.0"

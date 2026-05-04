@@ -3,108 +3,140 @@
 import { access, constants, cp, mkdir, readFile, writeFile } from "node:fs/promises";
 import { basename, dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { spawnSync } from "node:child_process";
 
-const command = process.argv[2];
-const targetArg = process.argv[3];
+const rawArgs = process.argv.slice(2);
+const command = rawArgs[0];
 const rootDirectory = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const requiredTools = [
+const targetScripts = {
+  "harness:init": "npx @sha3/harness@latest init",
+  "harness:open-chrome-canary": "node scripts/open-chrome-canary.mjs",
+  "harness:check": "biome check --config-path=biome/biome.json .",
+  "harness:publish": "node scripts/publish.mjs",
+};
+const managedCopies = [
   {
-    name: "node",
-    args: ["--version"],
+    source: ["AGENTS.md"],
+    target: ["AGENTS.md"],
   },
   {
-    name: "npm",
-    args: ["--version"],
+    source: ["skills"],
+    target: ["skills"],
+    recursive: true,
   },
   {
-    name: "git",
-    args: ["--version"],
+    source: ["biome", "biome.json"],
+    target: ["biome", "biome.json"],
   },
   {
-    name: "ztk",
-    args: ["run", "echo", "ok"],
-    hint: "Install with `brew install codejunkie99/ztk/ztk` and initialize with `ztk init -g`.",
+    source: ["mcp", "playwright-local-canary.json"],
+    target: ["mcp", "playwright-local-canary.json"],
+  },
+  {
+    source: ["scripts", "open-chrome-canary.mjs"],
+    target: ["scripts", "open-chrome-canary.mjs"],
+  },
+  {
+    source: ["scripts", "publish.mjs"],
+    target: ["scripts", "publish.mjs"],
   },
 ];
-const targetScripts = {
-  init: "npx @sha3dev/harness@latest init",
-  "open:chrome-canary": "node scripts/open-chrome-canary.mjs",
-  format: "biome format --write --config-path=biome/biome.json .",
-  lint: "biome lint --config-path=biome/biome.json .",
-  check: "biome check --config-path=biome/biome.json .",
-  ci: "npm run check",
-};
 
 if (command !== "init") {
-  console.error("Usage: harness init [target-directory]");
+  printUsage();
   process.exit(1);
 }
 
-const targetDirectory = resolve(process.cwd(), targetArg ?? ".");
+const initOptions = parseInitArgs(rawArgs.slice(1));
+const targetDirectory = process.cwd();
 
-await initializeProject(targetDirectory);
+await initializeProject(targetDirectory, initOptions);
 
-async function initializeProject(directory) {
-  await assertReadable(resolve(rootDirectory, "skills"));
-  await assertReadable(resolve(rootDirectory, "biome", "biome.json"));
-  await assertReadable(resolve(rootDirectory, "scripts", "open-chrome-canary.mjs"));
+async function initializeProject(directory, options) {
+  for (const file of managedCopies) {
+    await assertReadable(resolve(rootDirectory, ...file.source));
+  }
+
+  if (options.dryRun) {
+    reportDryRun(directory);
+    return;
+  }
+
   await mkdir(directory, { recursive: true });
 
-  const failingTools = getFailingTools(requiredTools);
-
-  await cp(resolve(rootDirectory, "skills"), resolve(directory, "skills"), {
-    force: true,
-    recursive: true,
-  });
-
-  await mkdir(resolve(directory, "biome"), { recursive: true });
-  await cp(resolve(rootDirectory, "biome", "biome.json"), resolve(directory, "biome", "biome.json"), {
-    force: true,
-  });
-
-  await mkdir(resolve(directory, "scripts"), { recursive: true });
-  await cp(resolve(rootDirectory, "scripts", "open-chrome-canary.mjs"), resolve(directory, "scripts", "open-chrome-canary.mjs"), {
-    force: true,
-  });
-
+  await copyManagedFiles(directory);
   await updatePackageJson(directory);
 
   console.log(`Initialized harness in ${directory}`);
-
-  if (failingTools.length > 0) {
-    console.warn(`Missing or failing tools: ${failingTools.map((tool) => tool.name).join(", ")}`);
-
-    for (const tool of failingTools) {
-      if (tool.hint !== undefined) {
-        console.warn(`${tool.name}: ${tool.hint}`);
-      }
-    }
-
-    process.exitCode = 1;
-  }
 }
 
 async function assertReadable(path) {
   await access(path, constants.R_OK);
 }
 
-function getFailingTools(tools) {
-  return tools.filter((tool) => {
-    const result = spawnSync(tool.name, tool.args, {
-      stdio: "ignore",
-    });
+async function copyManagedFiles(directory) {
+  for (const file of managedCopies) {
+    const source = resolve(rootDirectory, ...file.source);
+    const target = resolve(directory, ...file.target);
 
-    return result.error !== undefined || result.status !== 0;
-  });
+    await mkdir(dirname(target), { recursive: true });
+    await cp(source, target, {
+      force: true,
+      recursive: file.recursive === true,
+    });
+  }
+}
+
+function parseInitArgs(args) {
+  const options = {
+    dryRun: false,
+  };
+
+  for (const arg of args) {
+    if (arg === "--dry-run" || arg === "--check") {
+      options.dryRun = true;
+      continue;
+    }
+
+    console.error(arg.startsWith("-") ? `Unknown option: ${arg}` : `Unexpected argument: ${arg}`);
+    printUsage();
+    process.exit(1);
+  }
+
+  return options;
+}
+
+function reportDryRun(directory) {
+  console.log(`Would initialize harness in ${directory}`);
+  console.log("");
+  console.log("Files copied or refreshed:");
+
+  for (const file of managedCopies) {
+    console.log(`- ${file.target.join("/")}`);
+  }
+
+  console.log("");
+  console.log("package.json scripts:");
+
+  for (const [name, script] of Object.entries(targetScripts)) {
+    console.log(`- ${name}: ${script}`);
+  }
+
+  console.log("");
+  console.log("package.json devDependencies:");
+  console.log("- @biomejs/biome: ^2.0.0");
+}
+
+function printUsage() {
+  console.error("Usage: harness init [--dry-run]");
 }
 
 async function updatePackageJson(directory) {
   const packageJsonPath = resolve(directory, "package.json");
   const packageJson = await readPackageJson(packageJsonPath, directory);
+  const userScripts = Object.fromEntries(Object.entries(packageJson.scripts ?? {}).filter(([name]) => !name.startsWith("harness:")));
 
   packageJson.scripts = {
-    ...packageJson.scripts,
+    ...userScripts,
     ...targetScripts,
   };
 

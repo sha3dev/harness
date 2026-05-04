@@ -10,10 +10,23 @@ Initialize the current project:
 npx @sha3/harness@latest init
 ```
 
-Initialize a specific directory:
+Run the same command again to re-initialize an existing project. It refreshes the harness-managed files and scripts.
+
+Preview changes without writing files:
 
 ```sh
-npx @sha3/harness@latest init path/to/project
+npx @sha3/harness@latest init --dry-run
 ```
 
-Run the same command again to re-initialize an existing project. It refreshes the harness-managed files and scripts.
+## Scripts
+
+The initializer recreates every `package.json` script prefixed with `harness:`:
+
+```json
+{
+  "harness:init": "npx @sha3/harness@latest init",
+  "harness:open-chrome-canary": "node scripts/open-chrome-canary.mjs",
+  "harness:check": "biome check --config-path=biome/biome.json .",
+  "harness:publish": "node scripts/publish.mjs"
+}
+```

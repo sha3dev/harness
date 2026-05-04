@@ -7,10 +7,12 @@ Use this skill when a task requires Playwright browser automation and the user w
 1. Start Chrome Canary from the project root before using Playwright:
 
    ```sh
-   npm run open:chrome-canary
+   npm run harness:open-chrome-canary
    ```
 
 2. Configure the existing Playwright MCP server to connect to the local Chrome DevTools Protocol endpoint:
+
+   Use `mcp/playwright-local-canary.json`, or add the equivalent config to the active MCP configuration:
 
    ```json
    {
@@ -28,6 +30,6 @@ Use this skill when a task requires Playwright browser automation and the user w
 ## Notes
 
 - The launcher uses the real Chrome Canary user data directory on macOS by default: `~/Library/Application Support/Google/Chrome Canary`.
-- If Chrome Canary is already open without remote debugging, close it and run `npm run open:chrome-canary` first.
+- If Chrome Canary is already open without remote debugging, close it and run `npm run harness:open-chrome-canary` first.
 - Override `CHROME_CANARY_USER_DATA_DIR`, `CHROME_CANARY_PROFILE_DIRECTORY`, `CHROME_CANARY_EXECUTABLE_PATH`, or `CHROME_CANARY_REMOTE_DEBUGGING_PORT` when a project needs a different local setup.
 - Keep the MCP bound to `127.0.0.1`; the debugging endpoint exposes the browser session.
