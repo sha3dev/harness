@@ -23,12 +23,42 @@ Use this skill when writing or reviewing TypeScript source and tests.
 
 ### Visual Rhythm
 
+Code must be visually tight, uniform, and easy to scan. Biome enforces an 80-character line width — write code that fits naturally, not code that gets force-wrapped.
+
 - **No blank lines inside function bodies** unless separating two distinct logical blocks. One blank line maximum, never two.
 - **No blank lines after opening braces or before closing braces.**
-- **Keep lines short.** Target 80 characters. Never break an expression across lines — if it doesn't fit, decompose it into smaller named values or separate operations.
+- **Keep every line short.** If a line approaches 80 characters, the expression is doing too much. Decompose it into named intermediate values so each line is a short, self-contained statement. Never break a single expression across lines.
 - **Prefer dense expressions.** Use ternaries, short-circuits, nullish coalescing, and chained calls when they read naturally.
 - **Group related statements tightly.** Unrelated logic belongs in a different method, not after a blank line.
 - **One blank line between methods.** No more, no less.
+
+Avoid:
+
+```ts
+public async processUserOrder(userId: string, orderId: string, options: ProcessOptions): Promise<OrderResult> {
+  const user = await this.userRepository.findByIdOrThrow(userId, { includePreferences: true, includePaymentMethods: true });
+
+  const order = await this.orderRepository.findByIdWithItems(orderId, { status: "pending", includeDiscounts: options.applyDiscounts });
+
+  const result = await this.paymentService.charge(user.defaultPaymentMethod, order.totalWithDiscounts, { currency: order.currency, idempotencyKey: options.idempotencyKey });
+
+  return result;
+}
+```
+
+Prefer:
+
+```ts
+public async process(userId: string, orderId: string, options: ProcessOptions): Promise<OrderResult> {
+  const include = { includePreferences: true, includePaymentMethods: true };
+  const user = await this.users.findByIdOrThrow(userId, include);
+  const pending = { status: "pending" as const, includeDiscounts: options.applyDiscounts };
+  const order = await this.orders.findWithItems(orderId, pending);
+  const { currency, idempotencyKey } = order;
+  const charge = { currency, idempotencyKey };
+  return this.payments.charge(user.defaultPaymentMethod, order.total, charge);
+}
+```
 
 ### Rule Strength
 
