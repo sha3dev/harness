@@ -33,8 +33,22 @@ Use this skill when writing or reviewing TypeScript source and tests.
 All `src/**/*.ts` implementation files must expose behavior through a public class named after the file responsibility. One public class per file.
 
 - Prefer instance methods by default. Use static methods only for stateless pure operations where constructing the class would add no value.
-- Keep module-scope helper functions private, small, and below the class. Do not export helpers directly; expose behavior through the public class.
+- Never place standalone functions in a file that already contains a class. All logic belongs to the class as private, protected, or public methods.
 - Barrel or composition files (`index.ts`) may export small functions only to wire classes together. They must not contain implementation logic.
+
+### Auxiliary Resource Files
+
+When a class needs non-TypeScript content (SQL queries, templates, schemas), place it in a companion directory named after the source file. The directory sits next to the source file and contains one file per resource.
+
+```text
+src/packages/user/
+  user.repository.ts
+  user.repository/
+    find-by-id.sql
+    find-active.sql
+```
+
+Import or read these files from the class; never inline large non-TS blocks as template literals.
 
 ### Allowed Exceptions
 
