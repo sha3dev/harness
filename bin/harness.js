@@ -1,15 +1,13 @@
 #!/usr/bin/env node
 
+import { spawn } from "node:child_process";
 import { access, constants, cp, mkdir, readFile, writeFile } from "node:fs/promises";
 import { basename, dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const rawArgs = process.argv.slice(2);
 const command = rawArgs[0];
-const rootDirectory = resolve(
-  dirname(fileURLToPath(import.meta.url)),
-  "..",
-);
+const rootDirectory = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
 const targetScripts = {
   "harness:init": "npx @sha3/harness@latest init",
@@ -46,7 +44,8 @@ async function initializeProject(directory, options) {
   await mkdir(directory, { recursive: true });
   await copyManagedFiles(directory);
   await patchBiomeSchema(directory);
-  await updatePackageJson(directory);
+  const biomeVersion = await updatePackageJson(directory);
+  await formatProject(directory, biomeVersion);
   console.log(`Initialized harness in ${directory}`);
 }
 
@@ -77,9 +76,7 @@ async function patchBiomeSchema(directory) {
 
 async function detectBiomeVersion(directory) {
   try {
-    const biomePackagePath = resolve(
-      directory, "node_modules", "@biomejs", "biome", "package.json",
-    );
+    const biomePackagePath = resolve(directory, "node_modules", "@biomejs", "biome", "package.json");
     const content = await readFile(biomePackagePath, "utf8");
     return JSON.parse(content).version ?? null;
   } catch {
@@ -91,9 +88,7 @@ async function updatePackageJson(directory) {
   const packageJsonPath = resolve(directory, "package.json");
   const packageJson = await readPackageJson(packageJsonPath, directory);
   const isUserScript = ([name]) => !name.startsWith("harness:");
-  const userScripts = Object.fromEntries(
-    Object.entries(packageJson.scripts ?? {}).filter(isUserScript),
-  );
+  const userScripts = Object.fromEntries(Object.entries(packageJson.scripts ?? {}).filter(isUserScript));
   packageJson.scripts = { ...userScripts, ...targetScripts };
   const currentBiome = packageJson.devDependencies?.["@biomejs/biome"];
   packageJson.devDependencies = {
@@ -101,6 +96,7 @@ async function updatePackageJson(directory) {
     "@biomejs/biome": currentBiome ?? "^2.0.0",
   };
   await writeFile(packageJsonPath, `${JSON.stringify(packageJson, null, 2)}\n`);
+  return packageJson.devDependencies["@biomejs/biome"];
 }
 
 async function readPackageJson(path, directory) {
@@ -142,6 +138,24 @@ function reportDryRun(directory) {
   }
   console.log("\npackage.json devDependencies:");
   console.log("- @biomejs/biome: ^2.0.0");
+  console.log("\nFormat command:");
+  console.log("- npx --yes @biomejs/biome@^2.0.0 check --write --linter-enabled=false --config-path=biome/biome.json .");
+}
+
+async function formatProject(directory, biomeVersion) {
+  const biomePackage = `@biomejs/biome@${biomeVersion}`;
+  const args = ["--yes", biomePackage, "check", "--write", "--linter-enabled=false", "--config-path=biome/biome.json", "."];
+  await new Promise((resolvePromise, reject) => {
+    const child = spawn("npx", args, { cwd: directory, stdio: "inherit" });
+    child.on("error", reject);
+    child.on("close", (code) => {
+      if (code === 0) {
+        resolvePromise();
+        return;
+      }
+      reject(new Error(`Biome write failed with exit code ${code}`));
+    });
+  });
 }
 
 function printUsage() {

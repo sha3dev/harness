@@ -1,5 +1,5 @@
-import { readFile, writeFile } from "node:fs/promises";
 import { spawnSync } from "node:child_process";
+import { readFile, writeFile } from "node:fs/promises";
 
 const packageJsonPath = new URL("../package.json", import.meta.url);
 const maxPublishAttempts = 5;
