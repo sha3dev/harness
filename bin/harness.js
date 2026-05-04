@@ -19,17 +19,17 @@ const managedCopies = [
     target: ["AGENTS.md"],
   },
   {
-    source: ["skills"],
-    target: ["skills"],
+    source: ["claude", "skills"],
+    target: [".claude", "skills"],
     recursive: true,
+  },
+  {
+    source: ["claude", "config.json"],
+    target: [".claude", "config.json"],
   },
   {
     source: ["biome", "biome.json"],
     target: ["biome", "biome.json"],
-  },
-  {
-    source: ["mcp", "playwright-local-canary.json"],
-    target: ["mcp", "playwright-local-canary.json"],
   },
   {
     source: ["scripts", "open-chrome-canary.mjs"],

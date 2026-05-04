@@ -1,6 +1,6 @@
 {
   "name": "@sha3/harness",
-  "version": "0.0.1",
+  "version": "0.0.3",
   "type": "module",
   "publishConfig": {
     "access": "public"
@@ -12,9 +12,8 @@
     "AGENTS.md",
     "bin",
     "biome",
-    "mcp",
-    "scripts",
-    "skills"
+    "claude",
+    "scripts"
   ],
   "engines": {
     "node": ">=20"

@@ -12,6 +12,8 @@ npx @sha3/harness@latest init
 
 Run the same command again to re-initialize an existing project. It refreshes the harness-managed files and scripts.
 
+Managed agent files and MCP config are written under `.claude/`.
+
 Preview changes without writing files:
 
 ```sh

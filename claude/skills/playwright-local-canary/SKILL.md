@@ -10,9 +10,9 @@ Use this skill when a task requires Playwright browser automation and the user w
    npm run harness:open-chrome-canary
    ```
 
-2. Configure the existing Playwright MCP server to connect to the local Chrome DevTools Protocol endpoint:
+2. Use the existing Playwright MCP server configured in `.claude/config.json`.
 
-   Use `mcp/playwright-local-canary.json`, or add the equivalent config to the active MCP configuration:
+   The relevant MCP configuration is:
 
    ```json
    {
