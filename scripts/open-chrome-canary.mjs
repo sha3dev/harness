@@ -7,6 +7,9 @@ const remoteDebuggingPort = process.env.CHROME_CANARY_REMOTE_DEBUGGING_PORT ?? p
 const userDataDir = process.env.CHROME_CANARY_USER_DATA_DIR ?? path.join(os.homedir(), "Library", "Application Support", "Google", "Chrome Canary");
 const profileDirectory = process.env.CHROME_CANARY_PROFILE_DIRECTORY ?? "Default";
 const browserUrl = `http://127.0.0.1:${remoteDebuggingPort}`;
+const endpointProbeTimeoutMs = 1_000;
+const endpointLaunchTimeoutMs = 10_000;
+const endpointRetryDelayMs = 250;
 
 async function main() {
   if (await isEndpointReady(browserUrl)) {
@@ -28,7 +31,7 @@ async function main() {
 async function isEndpointReady(url) {
   try {
     const response = await fetch(new URL("/json/version", url), {
-      signal: AbortSignal.timeout(1_000),
+      signal: AbortSignal.timeout(endpointProbeTimeoutMs),
     });
     return response.ok;
   } catch {
@@ -37,11 +40,13 @@ async function isEndpointReady(url) {
 }
 
 async function waitForEndpoint(url) {
-  const deadline = Date.now() + 10_000;
+  const deadline = Date.now() + endpointLaunchTimeoutMs;
 
   while (Date.now() < deadline) {
-    if (await isEndpointReady(url)) return;
-    await new Promise((resolve) => setTimeout(resolve, 250));
+    if (await isEndpointReady(url)) {
+      return;
+    }
+    await new Promise((resolve) => setTimeout(resolve, endpointRetryDelayMs));
   }
 
   throw new Error(`Chrome Canary did not expose DevTools at ${url}. If Canary is already open, close it and run this script before opening it normally.`);

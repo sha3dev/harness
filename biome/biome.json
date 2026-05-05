@@ -36,9 +36,17 @@
         "noGlobalEval": "error"
       },
       "style": {
+        "noMagicNumbers": "error",
+        "noUselessElse": "error",
+        "useBlockStatements": "error",
+        "useCollapsedElseIf": "error",
+        "useCollapsedIf": "warn",
         "useConst": "error",
         "useNamingConvention": "warn",
-        "useTemplate": "warn"
+        "useSelfClosingElements": "error",
+        "useShorthandFunctionType": "error",
+        "useSingleVarDeclarator": "error",
+        "useTemplate": "error"
       },
       "suspicious": {
         "noConsole": "warn",

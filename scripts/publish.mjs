@@ -76,8 +76,12 @@ function compareVersions(left, right) {
   const rightParts = parseVersion(right);
 
   for (const index of [0, 1, 2]) {
-    if (leftParts[index] > rightParts[index]) return 1;
-    if (leftParts[index] < rightParts[index]) return -1;
+    if (leftParts[index] > rightParts[index]) {
+      return 1;
+    }
+    if (leftParts[index] < rightParts[index]) {
+      return -1;
+    }
   }
 
   return 0;

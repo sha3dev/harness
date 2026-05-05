@@ -14,20 +14,21 @@ Use this skill when writing or reviewing TypeScript source and tests.
 - Avoid `any` unless there is no practical alternative.
 - Prefer explicit return types for exported functions.
 - Use type-only imports when possible.
-- Always use braces in control flow.
+- Avoid magic numbers. Declare numeric values as named `const`s so their purpose is self-explanatory.
 - Throw plain `Error` by default; add custom error classes only when control flow depends on the error type.
 - Add abstractions (wrappers, interfaces, factories, helpers, option objects) only for a current need, never speculatively.
+- **Encapsulate aggressively into packages.** Logic that can hide behind an interface belongs in `packages/<name>/`, not as private methods in the app. Keep the application layer as a thin orchestrator.
 - Write the shortest clear implementation. Avoid verbose patterns, unnecessary temporaries, and boilerplate that adds length but not clarity.
 - Prefer single-return functions. Use early returns only for guard clauses at the top.
 - If a function needs many inputs, define a `<FunctionName>Options` type and pass a single `options` parameter.
 
 ### Visual Rhythm
 
-Code must be visually tight, uniform, and easy to scan. Biome enforces an 80-character line width — write code that fits naturally, not code that gets force-wrapped.
+Code must be visually tight, uniform, and easy to scan. Let Biome handle mechanical wrapping and formatting.
 
 - **No blank lines inside function bodies** unless separating two distinct logical blocks. One blank line maximum, never two.
 - **No blank lines after opening braces or before closing braces.**
-- **Keep every line short.** If a line approaches 80 characters, the expression is doing too much. Decompose it into named intermediate values so each line is a short, self-contained statement. Never break a single expression across lines.
+- **Keep expressions clear.** If an expression is doing too much, decompose it into named intermediate values instead of manually wrapping it.
 - **Prefer dense expressions.** Use ternaries, short-circuits, nullish coalescing, and chained calls when they read naturally.
 - **Group related statements tightly.** Unrelated logic belongs in a different method, not after a blank line.
 - **One blank line between methods.** No more, no less.
@@ -91,6 +92,32 @@ Import these from the class; never inline large non-TS blocks as template litera
 
 Files that do not require a class: `*.types.ts`, `index.ts` barrels, `scripts/`, tests, and tiny config modules that only read environment values.
 
+### Package-First Architecture
+
+Application code must stay thin. When logic can be encapsulated behind a clear interface, extract it into a **package** (`packages/<name>/`) with its own responsibility, types, and tests. The app orchestrates packages — it does not accumulate private methods.
+
+**Extract into a package when:**
+
+- A piece of logic has a well-defined input/output contract.
+- The same concept would need explanation if inlined (parsing, validation, transformation, protocol handling, domain rules).
+- A class is growing beyond ~3–4 public methods or ~5 private methods — the private methods are a sign of hidden packages.
+
+**Package characteristics:**
+
+- Small, single-responsibility. A package that does two unrelated things should be two packages.
+- Exposes a minimal public API (one class or a few functions + types).
+- Has its own `index.ts` barrel for clean imports.
+- Can be understood in isolation without reading the consuming app.
+
+**The app layer should:**
+
+- Import packages and wire them together.
+- Contain orchestration logic (sequence, control flow, error boundaries).
+- Avoid implementing domain/business logic directly.
+- Have very few private methods — if you need many, you're missing a package.
+
+**Bias toward extraction.** When in doubt, extract. A 30-line package with a clear name is always preferable to 30 lines buried in a 500-line class. The cost of a small package is near-zero; the cost of a monolithic class grows with every addition.
+
 ### File Cohesion
 
 Split when a file mixes responsibilities or hides important behavior. Extract by stable responsibility (parsing, mapping, persistence, orchestration). Do not split merely to satisfy a size target.
@@ -100,7 +127,9 @@ Split when a file mixes responsibilities or hides important behavior. Extract by
 Organize every `src/**/*.ts` implementation file with `@section` markers. Only add sections that have content. Sections must appear in this order — never reorder:
 
 ```ts
-/** @section <name> */
+/** 
+ * @section <name> 
+ */
 ```
 
 1. `imports:externals` 2. `imports:internals` 3. `consts` 4. `types` 5. `class` 6. `private:attributes` 7. `protected:attributes` 8. `public:properties` 9. `constructor` 10. `static:properties` 11. `factory` 12. `private:methods` 13. `protected:methods` 14. `public:methods` 15. `static:methods`
@@ -110,23 +139,33 @@ Files without a class still use applicable markers (`imports:*`, `types`, `const
 ### Example
 
 ```ts
-/** @section imports:externals */
+/** 
+ * @section imports:externals 
+ */
 
 import type { Client } from "some-client";
 
-/** @section imports:internals */
+/** 
+ * @section imports:internals 
+ */
 
 import type { Item } from "./item.types.js";
 
-/** @section class */
+/** 
+ * @section class 
+ */
 
 /** Persists and retrieves items. */
 export class ItemRepository {
-  /** @section constructor */
+  /** 
+   * @section constructor 
+   */
 
   public constructor(private readonly client: Client) {}
 
-  /** @section public:methods */
+  /** 
+   * @section public:methods 
+   */
 
   /** Finds an item by its unique identifier. */
   public async findById(id: string): Promise<Item | null> {

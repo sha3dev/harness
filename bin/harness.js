@@ -25,6 +25,11 @@ const managedCopies = [
   { source: ["scripts", "publish.mjs"], target: ["scripts", "publish.mjs"] },
 ];
 
+const biomeConfigArgs = ["--config-path=biome/biome.json", "."];
+const formatOnlyBiomeArgs = ["check", "--write", "--linter-enabled=false", ...biomeConfigArgs];
+const safeBiomeCheckArgs = ["check", "--write", ...biomeConfigArgs];
+const unsafeBiomeCheckArgs = ["check", "--write", "--unsafe", "--skip=suspicious/noConsole", "--skip=complexity/useOptionalChain", ...biomeConfigArgs];
+
 if (command !== "init") {
   printUsage();
   process.exit(1);
@@ -138,13 +143,21 @@ function reportDryRun(directory) {
   }
   console.log("\npackage.json devDependencies:");
   console.log("- @biomejs/biome: ^2.0.0");
-  console.log("\nFormat command:");
+  console.log("\nFormat and fix commands:");
   console.log("- npx --yes @biomejs/biome@^2.0.0 check --write --linter-enabled=false --config-path=biome/biome.json .");
+  console.log("- npx --yes @biomejs/biome@^2.0.0 check --write --unsafe --skip=suspicious/noConsole --skip=complexity/useOptionalChain --config-path=biome/biome.json .");
+  console.log("- npx --yes @biomejs/biome@^2.0.0 check --write --config-path=biome/biome.json .");
 }
 
 async function formatProject(directory, biomeVersion) {
   const biomePackage = `@biomejs/biome@${biomeVersion}`;
-  const args = ["--yes", biomePackage, "check", "--write", "--linter-enabled=false", "--config-path=biome/biome.json", "."];
+  await runBiome(directory, biomePackage, formatOnlyBiomeArgs);
+  await runBiome(directory, biomePackage, unsafeBiomeCheckArgs);
+  await runBiome(directory, biomePackage, safeBiomeCheckArgs);
+}
+
+async function runBiome(directory, biomePackage, commandArgs) {
+  const args = ["--yes", biomePackage, ...commandArgs];
   await new Promise((resolvePromise, reject) => {
     const child = spawn("npx", args, { cwd: directory, stdio: "inherit" });
     child.on("error", reject);
@@ -153,7 +166,8 @@ async function formatProject(directory, biomeVersion) {
         resolvePromise();
         return;
       }
-      reject(new Error(`Biome write failed with exit code ${code}`));
+      console.error(`Biome applied available fixes, but some diagnostics remain. Exit code: ${code}`);
+      resolvePromise();
     });
   });
 }

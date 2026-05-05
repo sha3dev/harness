@@ -14,7 +14,7 @@ Run the same command again to re-initialize an existing project. It refreshes th
 
 Managed agent files and MCP config are written under `.claude/`.
 
-Init also runs Biome with `--write` after refreshing the config so existing supported files are reformatted immediately.
+Init also runs Biome with `--write` after refreshing the config so existing supported files are reformatted immediately. It applies unsafe fixes aggressively, except fixes that remove console output or rewrite logical chains to optional chaining.
 
 Preview changes without writing files:
 
