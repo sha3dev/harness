@@ -19,7 +19,7 @@ Use this skill when writing or reviewing TypeScript source and tests.
 - Add abstractions (wrappers, interfaces, factories, helpers, option objects) only for a current need, never speculatively.
 - **Encapsulate aggressively into packages.** Logic that can hide behind an interface belongs in `packages/<name>/`, not as private methods in the app. Keep the application layer as a thin orchestrator.
 - Write the shortest clear implementation. Avoid verbose patterns, unnecessary temporaries, and boilerplate that adds length but not clarity.
-- Prefer single-return functions. Use early returns only for guard clauses at the top.
+- **Single return per function.** Each function must have exactly one `return` statement at the end of the body. The only exception is guard clauses: early returns at the very top of the function that reject invalid input or short-circuit trivially empty cases (e.g., `if (!input) { return null; }`). Mid-body returns, returns inside loops, and conditional returns that could be restructured as a final expression are not allowed.
 - If a function needs many inputs, define a `<FunctionName>Options` type and pass a single `options` parameter.
 
 ### Visual Rhythm
