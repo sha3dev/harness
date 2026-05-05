@@ -128,6 +128,9 @@ dist
 # pnpm
 .pnpm-store
 
+# Local Chrome Canary automation profile
+.chrome-canary-automation/
+
 # yarn v3
 .pnp.*
 .yarn/*

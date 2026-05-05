@@ -33,7 +33,8 @@ Use this skill when Playwright browser automation should reuse the local Chrome 
 
 ## Notes
 
-- Uses the real Chrome Canary user data directory on macOS: `~/Library/Application Support/Google/Chrome Canary`.
+- Uses an isolated automation profile in the project root by default: `.chrome-canary-automation/`.
+- This avoids reusing the personal Chrome Canary profile, which can leave the process running without exposing remote debugging on `127.0.0.1:9222`.
 - If Chrome Canary is already open without remote debugging, close it and relaunch with the script.
 - Environment overrides: `CHROME_CANARY_USER_DATA_DIR`, `CHROME_CANARY_PROFILE_DIRECTORY`, `CHROME_CANARY_EXECUTABLE_PATH`, `CHROME_CANARY_REMOTE_DEBUGGING_PORT`.
 - Keep MCP bound to `127.0.0.1` — the debugging endpoint exposes the full browser session.
