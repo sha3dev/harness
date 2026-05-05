@@ -30,6 +30,7 @@ Code must be visually tight, uniform, and easy to scan. Let Biome handle mechani
 - **No blank lines after opening braces or before closing braces.**
 - **Keep expressions clear.** If an expression is doing too much, decompose it into named intermediate values instead of manually wrapping it.
 - **Prefer dense expressions.** Use ternaries, short-circuits, nullish coalescing, and chained calls when they read naturally.
+- **One-line when it fits.** Object literals, arrays, parameter lists, and short type annotations that fit within the configured line width must stay on a single line. Only break into multiple lines when the expression genuinely exceeds the line width or becomes hard to scan. Let Biome collapse — never manually break what fits.
 - **Group related statements tightly.** Unrelated logic belongs in a different method, not after a blank line.
 - **One blank line between methods.** No more, no less.
 

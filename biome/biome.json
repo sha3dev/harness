@@ -49,7 +49,7 @@
         "useTemplate": "error"
       },
       "suspicious": {
-        "noConsole": "warn",
+        "noConsole": "off",
         "noDebugger": "error",
         "noExplicitAny": "warn",
         "noVar": "error"
