@@ -26,6 +26,7 @@ Use this skill when Playwright browser automation should reuse the local Chrome 
          "args": [
            "@playwright/mcp@latest",
            "--cdp-endpoint=http://127.0.0.1:9222",
+           "--ignore-https-errors",
            "--grant-permissions=geolocation",
            "--init-script=scripts/playwright-spain-init.js"
          ]
@@ -47,6 +48,7 @@ Use this skill when Playwright browser automation should reuse the local Chrome 
 - Uses an isolated automation profile in the project root by default: `.chrome-canary-automation/`.
 - This avoids reusing the personal Chrome Canary profile, which can leave the process running without exposing remote debugging on `127.0.0.1:9222`.
 - If Chrome Canary is already open without remote debugging, close it and relaunch with the script.
+- The MCP is configured with `--ignore-https-errors` so navigation can continue through certificate hostname mismatches such as `net::ERR_CERT_COMMON_NAME_INVALID`.
 - The launch script writes profile language preferences and starts Chrome with `--lang=es-ES`, `--accept-lang=es-ES,es,en`, and `TZ=Europe/Madrid`.
 - Environment overrides: `CHROME_CANARY_USER_DATA_DIR`, `CHROME_CANARY_PROFILE_DIRECTORY`, `CHROME_CANARY_EXECUTABLE_PATH`, `CHROME_CANARY_REMOTE_DEBUGGING_PORT`, `CHROME_CANARY_LANGUAGE`, `CHROME_CANARY_ACCEPT_LANGUAGES`, `CHROME_CANARY_TIME_ZONE`.
 - Sites can still choose language by IP address, account settings, cookies, or server-side country detection. This setup only controls browser-visible signals.
