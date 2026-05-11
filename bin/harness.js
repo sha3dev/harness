@@ -22,6 +22,7 @@ const managedCopies = [
   { source: ["claude", "config.json"], target: [".claude", "config.json"] },
   { source: ["biome", "biome.json"], target: ["biome", "biome.json"] },
   { source: ["scripts", "open-chrome-canary.mjs"], target: ["scripts", "open-chrome-canary.mjs"] },
+  { source: ["scripts", "playwright-spain-init.js"], target: ["scripts", "playwright-spain-init.js"] },
   { source: ["scripts", "publish.mjs"], target: ["scripts", "publish.mjs"] },
 ];
 
